@@ -26,11 +26,7 @@ class ExpandableFile(
     }
 }
 
-class FileTree(root: File, hideFiles: Boolean, val onFileSelected: (File) -> Unit) {
-    private val expandableRoot = ExpandableFile(root, 0, hideFiles).apply {
-        toggleExpanded()
-    }
-
+class FileTree(private val expandableRoot: ExpandableFile, val onFileSelected: (File) -> Unit) {
     val items: List<Item> get() {
         return expandableRoot.toItems()
     }
@@ -38,7 +34,7 @@ class FileTree(root: File, hideFiles: Boolean, val onFileSelected: (File) -> Uni
     inner class Item constructor(
         private val file: ExpandableFile
     ) {
-        val name: String get() = file.file.name
+        val fullFile: File get() = file.file
 
         val level: Int get() = file.level
 

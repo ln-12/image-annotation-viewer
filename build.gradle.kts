@@ -19,6 +19,9 @@ repositories {
 dependencies {
     implementation(compose.desktop.currentOs)
     api(compose.materialIconsExtended)
+
+    // https://github.com/russhwolf/multiplatform-settings
+    implementation("com.russhwolf:multiplatform-settings-no-arg:0.7.1")
 }
 
 tasks.withType<KotlinCompile>() {

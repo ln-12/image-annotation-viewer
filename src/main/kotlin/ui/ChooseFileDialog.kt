@@ -11,9 +11,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.russhwolf.settings.Settings
 import io.File
 import io.createSystemFile
 import io.toProjectFile
+import ui.filetree.ExpandableFile
 import ui.filetree.FileTree
 import ui.filetree.FileTreeView
 
@@ -27,6 +29,9 @@ fun ChooseFileDialog(onItemSelected: (File) -> Unit) {
     ) {
         val selectedFile = remember { mutableStateOf<File?>(null) }
         val fileTree = remember {
+            val settings = Settings()
+            val path: String? = settings.getStringOrNull("path")
+
             val roots = java.io.File.listRoots()
 
             val projectFile = if(roots.size == 1) {
@@ -35,7 +40,38 @@ fun ChooseFileDialog(onItemSelected: (File) -> Unit) {
                 createSystemFile(roots)
             }
 
-            FileTree(projectFile, false, onFileSelected = {
+            val expandableRoot = ExpandableFile(projectFile, 0, false).apply {
+                toggleExpanded()
+            }
+
+            if(path != null) {
+                val directories = arrayListOf<String>()
+                val fullPath = java.io.File(path)
+                var parent: java.io.File? = fullPath
+
+                while(parent != null) {
+                    if(parent.name.isNotEmpty()) {
+                        directories.add(parent.name)
+                    }
+                    parent = parent.parentFile
+                }
+
+                directories.reverse()
+
+                var children: List<ExpandableFile>? = expandableRoot.children
+
+                for(directory in directories) {
+                    val child = children?.firstOrNull { it.file.name == directory }
+
+                    child?.toggleExpanded()
+
+                    children = child?.children
+                }
+
+                selectedFile.value = fullPath.toProjectFile()
+            }
+
+            FileTree(expandableRoot, onFileSelected = {
                 selectedFile.value = it
             })
         }
@@ -44,6 +80,7 @@ fun ChooseFileDialog(onItemSelected: (File) -> Unit) {
             Column {
                 FileTreeView(
                     fileTree,
+                    selectedFile.value,
                     modifier = Modifier.weight(1f)
                 )
 
@@ -54,6 +91,11 @@ fun ChooseFileDialog(onItemSelected: (File) -> Unit) {
 
                             if(file != null) {
                                 onItemSelected(file)
+
+                                val settings = Settings()
+                                val filePath = if(file.isDirectory) { file.path.toString() } else { file.path.parent.toString() }
+                                settings.putString("path", filePath)
+
                                 AppManager.focusedWindow?.close()
                             }
                         },

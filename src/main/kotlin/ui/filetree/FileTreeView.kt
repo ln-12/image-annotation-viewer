@@ -3,9 +3,11 @@ package ui.filetree
 import VerticalScrollbar
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyColumnFor
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Icon
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -25,19 +27,21 @@ import androidx.compose.ui.unit.sp
 import pointerMoveFilter
 
 @Composable
-fun FileTreeView(model: FileTree, modifier: Modifier) =
+fun FileTreeView(model: FileTree, selectedFile: io.File?, modifier: Modifier) =
     with(AmbientDensity.current) {
         Box(modifier = modifier) {
             val scrollState = rememberLazyListState()
             val fontSize = 14.sp
             val lineHeight = fontSize.toDp() * 1.5f
 
-            LazyColumnFor(
-                model.items,
+            LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 state = scrollState,
-                itemContent = { FileTreeItemView(fontSize, lineHeight, it) }
-            )
+            ) {
+                items(model.items) {
+                    FileTreeItemView(fontSize, lineHeight, it, it.fullFile.path == selectedFile?.path)
+                }
+            }
 
             VerticalScrollbar(
                 Modifier.align(Alignment.CenterEnd),
@@ -49,41 +53,47 @@ fun FileTreeView(model: FileTree, modifier: Modifier) =
     }
 
 @Composable
-private fun FileTreeItemView(fontSize: TextUnit, height: Dp, model: FileTree.Item) = Row(
-    modifier = Modifier
-        .wrapContentHeight()
-        .clickable { model.open() }
-        .padding(start = 24.dp * model.level)
-        .height(height)
-        .fillMaxWidth()
-) {
-    val active = remember { mutableStateOf(false) }
-
-    FileItemIcon(Modifier.align(Alignment.CenterVertically), model)
-    Text(
-        text = model.name,
-        color = if (active.value) Color.LightGray else Color.White, //AmbientContentColor.current.copy(alpha = 0.60f) else AmbientContentColor.current,
-        modifier = Modifier
-            .align(Alignment.CenterVertically)
-            .clipToBounds()
-            .pointerMoveFilter(
-                onEnter = {
-                    active.value = true
-                    true
-                },
-                onExit = {
-                    active.value = false
-                    true
-                },
-                onMove = {
-                    false
+private fun FileTreeItemView(fontSize: TextUnit, height: Dp, model: FileTree.Item, selected: Boolean) {
+    Surface(color = if(selected) { Color.Gray } else { Color.Transparent }) {
+        Row(
+            modifier = Modifier
+                .wrapContentHeight()
+                .clickable {
+                    model.open()
                 }
-            ),
-        softWrap = true,
-        fontSize = fontSize,
-        overflow = TextOverflow.Ellipsis,
-        maxLines = 1
-    )
+                .padding(start = 24.dp * model.level)
+                .height(height)
+                .fillMaxWidth(),
+        ) {
+            val active = remember { mutableStateOf(false) }
+
+            FileItemIcon(Modifier.align(Alignment.CenterVertically), model)
+            Text(
+                text = model.fullFile.name,
+                color = if (active.value) Color.LightGray else Color.White, //AmbientContentColor.current.copy(alpha = 0.60f) else AmbientContentColor.current,
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .clipToBounds()
+                    .pointerMoveFilter(
+                        onEnter = {
+                            active.value = true
+                            true
+                        },
+                        onExit = {
+                            active.value = false
+                            true
+                        },
+                        onMove = {
+                            false
+                        }
+                    ),
+                softWrap = true,
+                fontSize = fontSize,
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1,
+            )
+        }
+    }
 }
 
 @Composable

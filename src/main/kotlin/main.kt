@@ -5,7 +5,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.emptyContent
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -201,10 +200,8 @@ fun AnnotatedImageArea(model: DataModel, modifier: Modifier = Modifier) {
 
                     for(y in top until bottom) {
                         img.setRGB(start, y, color)
-                        img.setRGB(start, y, color)
+                        img.setRGB(end, y, color)
                     }
-
-                    println("$start $top")
 
                     Image(
                         Image.makeFromEncoded(img.toByteArray()).asImageBitmap(),
@@ -228,7 +225,7 @@ fun ImagePreview(
     annotatedImage: AnnotatedImage
 ) {
     val cardHover = remember { mutableStateOf(false) }
-    val infoButtonHover = remember { mutableStateOf(false) }
+
     Card(
         backgroundColor = if (cardHover.value) AppTheme.colors.MiniatureHoverColor else AppTheme.colors.MiniatureColor,
         modifier = Modifier.padding(end = 10.dp).preferredHeight(70.dp)
@@ -305,28 +302,44 @@ fun ImageSelectorArea(model: DataModel, modifier: Modifier) {
 
         Spacer(modifier = Modifier.preferredHeight(8.dp))
 
-        Button(
-            onClick = {
-                ChooseFileDialog(onItemSelected = { file ->
-                    val files = if(file.isDirectory) {
-                        file.children.filter { it.name.endsWith(".png") }
-                    } else {
-                        listOf(file)
-                    }.map {
-                        // TODO support more formats
-                        val boundingBox = PascalVocBoundingBoxProvider.getBoundingBoxesForFile(it.path.toString().replace(".png", ".xml"))
-                        AnnotatedImage(it.path, readImage(it)!!, boundingBox)
-                    }
+        Row {
+            Button(
+                onClick = {
+                    ChooseFileDialog(onItemSelected = { file ->
+                        val files = if (file.isDirectory) {
+                            file.children
+                                .filter { it.name.endsWith(".png") }
+                                .sortedBy { it.name.toLowerCase() }
+                        } else {
+                            listOf(file)
+                        }.map {
+                            // TODO support more formats
+                            val boundingBox = PascalVocBoundingBoxProvider.getBoundingBoxesForFile(
+                                it.path.toString().replace(".png", ".xml")
+                            )
+                            AnnotatedImage(it.path, readImage(it)!!, boundingBox)
+                        }
 
-                    model.selectedImages.value = files
-                    model.annotatedImage.value = files[0]
+                        model.selectedImages.value = files
+                        model.annotatedImage.value = files[0]
+                    })
+                },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Choose data")
+            }
 
-                    println("Selected images: ${files.map { it.path.fileName.toString() }}")
-                })
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Choose directory")
+            Spacer(modifier = Modifier.preferredWidth(8.dp))
+
+            Button(
+                onClick = {
+                    model.selectedImages.value = model.selectedImages.value
+                    model.annotatedImage.value = model.annotatedImage.value
+                },
+                modifier = Modifier.wrapContentWidth()
+            ) {
+                Text("Refresh")
+            }
         }
     }
 }
