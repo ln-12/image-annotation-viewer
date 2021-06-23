@@ -25,7 +25,6 @@ import io.toByteArray
 import model.AnnotatedImage
 import model.BoundingBox
 import model.DataModel
-import org.jetbrains.skija.Image
 import ui.Clickable
 import ui.common.AppTheme
 import java.awt.image.BufferedImage
@@ -46,7 +45,7 @@ fun setContent() {
             setTitleBar(text = "Image Annotation Viewer")
             Row {
                 AnnotatedImageArea(model, modifier = Modifier.weight(1f))
-                ImageSelectorArea(model, modifier = Modifier.preferredWidth(400.dp))
+                ImageSelectorArea(model, modifier = Modifier.width(400.dp))
             }
         }
     }
@@ -58,7 +57,7 @@ fun setTitleBar(text: String) {
     TopAppBar(
         backgroundColor = AppTheme.colors.DarkGray,
         title = {
-            Row(Modifier.preferredHeight(50.dp)) {
+            Row(Modifier.height(50.dp)) {
                 Text(
                     text,
                     color = AppTheme.colors.White,
@@ -110,8 +109,9 @@ fun setTitleBar(text: String) {
                         }
                     ) {
                         Image(
-                            imageResource("icons/outline_info_white_18dp.png"),
-                            modifier = Modifier.preferredSize(24.dp)
+                            bitmap = imageResource("icons/outline_info_white_18dp.png"),
+                            contentDescription = "Show info",
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }
@@ -175,7 +175,8 @@ fun AnnotatedImageArea(model: DataModel, modifier: Modifier = Modifier) {
                 Text(text = "No data selected")
             } else {
                 Image(
-                    Image.makeFromEncoded(file.image.toByteArray()).asImageBitmap(),
+                    org.jetbrains.skija.Image.makeFromEncoded(file.image.toByteArray()).asImageBitmap(),
+                    contentDescription = "Content image",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Fit,
                     alignment = Alignment.Center
@@ -204,9 +205,10 @@ fun AnnotatedImageArea(model: DataModel, modifier: Modifier = Modifier) {
                     }
 
                     Image(
-                        Image.makeFromEncoded(img.toByteArray()).asImageBitmap(),
+                        org.jetbrains.skija.Image.makeFromEncoded(img.toByteArray()).asImageBitmap(),
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Fit,
+                        contentDescription = "Bounding box",
                         alignment = Alignment.Center
                     )
 
@@ -228,7 +230,7 @@ fun ImagePreview(
 
     Card(
         backgroundColor = if (cardHover.value) AppTheme.colors.MiniatureHoverColor else AppTheme.colors.MiniatureColor,
-        modifier = Modifier.padding(end = 10.dp).preferredHeight(70.dp)
+        modifier = Modifier.padding(end = 10.dp).height(70.dp)
             .fillMaxWidth()
             .hover(
                 onEnter = {
@@ -250,11 +252,12 @@ fun ImagePreview(
     ) {
         Row(modifier = Modifier.padding(end = 30.dp)) {
             Image(
-                Image.makeFromEncoded(annotatedImage.image.toByteArray()).asImageBitmap(),
-                modifier = Modifier.preferredHeight(70.dp)
-                    .preferredWidth(90.dp)
+                org.jetbrains.skija.Image.makeFromEncoded(annotatedImage.image.toByteArray()).asImageBitmap(),
+                modifier = Modifier.height(70.dp)
+                    .width(90.dp)
                     .padding(start = 1.dp, top = 1.dp, end = 1.dp, bottom = 1.dp),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
+                contentDescription = "Image preview",
             )
 
             Text(
@@ -277,8 +280,8 @@ fun ImageSelectorArea(model: DataModel, modifier: Modifier) {
             .padding(8.dp)
     ) {
          Box(modifier = Modifier.weight(1f)) {
-            val stateVertical = rememberScrollState(0f)
-            ScrollableColumn(scrollState = stateVertical) {
+             val stateVertical = rememberScrollState(0)
+             Column(modifier = Modifier.verticalScroll(stateVertical)) {
                 var index = 1
                 Column {
                     Spacer(modifier = Modifier.height(5.dp))
@@ -300,7 +303,7 @@ fun ImageSelectorArea(model: DataModel, modifier: Modifier) {
             )
         }
 
-        Spacer(modifier = Modifier.preferredHeight(8.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         Row {
             Button(
@@ -329,7 +332,7 @@ fun ImageSelectorArea(model: DataModel, modifier: Modifier) {
                 Text("Choose data")
             }
 
-            Spacer(modifier = Modifier.preferredWidth(8.dp))
+            Spacer(modifier = Modifier.width(8.dp))
 
             Button(
                 onClick = {

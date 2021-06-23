@@ -84,7 +84,7 @@ fun ChooseFileDialog(onItemSelected: (File) -> Unit) {
                     modifier = Modifier.weight(1f)
                 )
 
-                Row(modifier = Modifier.fillMaxWidth().preferredHeight(55.dp), horizontalArrangement = Arrangement.End) {
+                Row(modifier = Modifier.fillMaxWidth().height(55.dp), horizontalArrangement = Arrangement.End) {
                     Button(
                         onClick = {
                             val file = selectedFile.value

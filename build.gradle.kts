@@ -3,8 +3,8 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.4.21"
-    id("org.jetbrains.compose") version "0.3.0-build136"
+    kotlin("jvm") version "1.5.10"
+    id("org.jetbrains.compose") version "0.4.0"
 }
 
 group = "me.user"
@@ -21,7 +21,7 @@ dependencies {
     api(compose.materialIconsExtended)
 
     // https://github.com/russhwolf/multiplatform-settings
-    implementation("com.russhwolf:multiplatform-settings-no-arg:0.7.1")
+    implementation("com.russhwolf:multiplatform-settings-no-arg:0.7.7")
 }
 
 tasks.withType<KotlinCompile>() {
@@ -33,6 +33,7 @@ compose.desktop {
         mainClass = "MainKt"
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            packageVersion = "1.0.0"
             packageName = "image-annotation-viewer"
         }
     }
