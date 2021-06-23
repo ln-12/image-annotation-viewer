@@ -1,7 +1,6 @@
 package boundingboxprovider
 
 import model.BoundingBox
-import java.util.*
 
 // adopted from https://github.com/deeplearning4j/DataVec/blob/master/datavec-data/datavec-data-image/src/main/java/org/datavec/image/recordreader/objdetect/impl/VocLabelProvider.java
 /*

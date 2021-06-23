@@ -18,19 +18,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import pointerMoveFilter
-import androidx.compose.ui.platform.LocalDensity
 
 @Composable
-fun FileTreeView(model: FileTree, selectedFile: io.File?, modifier: Modifier) =
+fun FileTreeView(model: FileTree, selectedFile: io.File?, modifier: Modifier = Modifier) =
     with(LocalDensity.current) {
         Box(modifier = modifier) {
-            val scrollState = rememberLazyListState()
+            val index = model.items.indexOfFirst { it.fullFile.path == selectedFile?.path }
+
+            val scrollState = rememberLazyListState(if(index > -1) { kotlin.math.max(index - 5, 0) } else { 0 })
             val fontSize = 14.sp
             val lineHeight = fontSize.toDp() * 1.5f
 

@@ -7,19 +7,21 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.russhwolf.settings.ExperimentalSettingsImplementation
 import com.russhwolf.settings.Settings
 import io.File
 import io.createSystemFile
 import io.toProjectFile
+import ui.common.AppTheme
 import ui.filetree.ExpandableFile
 import ui.filetree.FileTree
 import ui.filetree.FileTreeView
 
 
+@OptIn(ExperimentalSettingsImplementation::class)
 fun ChooseFileDialog(onItemSelected: (File) -> Unit) {
     Window(
         title = "Select file",
@@ -76,13 +78,14 @@ fun ChooseFileDialog(onItemSelected: (File) -> Unit) {
             })
         }
 
-        Surface(color = Color.DarkGray, modifier = Modifier.fillMaxWidth().fillMaxHeight()) {
+        Surface(color = AppTheme.colors.DarkGray, modifier = Modifier.fillMaxWidth().fillMaxHeight()) {
             Column {
-                FileTreeView(
-                    fileTree,
-                    selectedFile.value,
-                    modifier = Modifier.weight(1f)
-                )
+                Surface(color = AppTheme.colors.Gray, modifier = Modifier.fillMaxWidth().padding(8.dp).weight(1f)) {
+                    FileTreeView(
+                        fileTree,
+                        selectedFile.value,
+                    )
+                }
 
                 Row(modifier = Modifier.fillMaxWidth().height(55.dp), horizontalArrangement = Arrangement.End) {
                     Button(
