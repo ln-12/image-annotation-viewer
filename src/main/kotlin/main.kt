@@ -1,11 +1,8 @@
-import androidx.compose.desktop.Window
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
@@ -14,10 +11,9 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.res.imageResource
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.*
 import boundingboxprovider.PascalVocBoundingBoxProvider
 import io.readImage
 import io.toByteArray
@@ -27,13 +23,20 @@ import model.DataModel
 import ui.Clickable
 import ui.common.AppTheme
 import java.awt.image.BufferedImage
+import java.util.*
 
 
-fun main() = Window(size = IntSize(1280, 768)) {
-    MaterialTheme {
-        setContent()
+fun main() = application {
+    Window(
+        onCloseRequest = ::exitApplication,
+        state = rememberWindowState(width = 1280.dp, height = 720.dp)
+    ) {
+        MaterialTheme {
+            setContent()
+        }
     }
 }
+
 
 
 @Composable
@@ -53,6 +56,8 @@ fun setContent() {
 @Composable
 fun setTitleBar(text: String) {
     val refreshButtonHover = remember { mutableStateOf(false) }
+    var isDialogOpen by remember { mutableStateOf(false) }
+
     TopAppBar(
         backgroundColor = AppTheme.colors.DarkGray,
         title = {
@@ -83,39 +88,42 @@ fun setTitleBar(text: String) {
                             }
                         ).background(color = if (refreshButtonHover.value) AppTheme.colors.TranslucentBlack else AppTheme.colors.Transparent),
                         onClick = {
-                            Window(
-                                title = "About",
-                                size = IntSize(500, 300),
-                                location = IntOffset(100, 100),
-                                centered = false
-                            ) {
-                                Surface(color = AppTheme.colors.DarkGray, modifier = Modifier.fillMaxWidth().fillMaxHeight()) {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .fillMaxHeight(),
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.Center
-                                    ) {
-                                        Text("Image Annotation Viewer", color = AppTheme.colors.White)
-                                        Text("(C) 2021 LN-12", color = AppTheme.colors.White)
-                                        Text("", color = AppTheme.colors.White)
-                                        Text("UI: https://www.jetbrains.com/lp/compose/", color = AppTheme.colors.White)
-                                        Text("Icons: https://material.io/resources/icons/?style=outline", color = AppTheme.colors.White)
-                                    }
-                                }
-                            }
+                            isDialogOpen = true
                         }
                     ) {
                         Image(
-                            bitmap = imageResource("icons/outline_info_white_18dp.png"),
+                            painter = painterResource("icons/outline_info_white_18dp.png"),
                             contentDescription = "Show info",
                             modifier = Modifier.size(24.dp)
                         )
                     }
                 }
-
-
+                if(isDialogOpen) {
+                    Dialog(
+                        title = "About",
+                        onCloseRequest = { isDialogOpen = false },
+                        state = rememberDialogState(position = WindowPosition(Alignment.Center), size = WindowSize(720.dp, 300.dp))
+                    ) {
+                        Surface(color = AppTheme.colors.DarkGray, modifier = Modifier.fillMaxWidth().fillMaxHeight()) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .fillMaxHeight(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Text("Image Annotation Viewer", color = AppTheme.colors.White)
+                                Text("(C) 2021 LN-12", color = AppTheme.colors.White)
+                                Text("", color = AppTheme.colors.White)
+                                Text("UI: https://www.jetbrains.com/lp/compose/", color = AppTheme.colors.White)
+                                Text(
+                                    "Icons: https://material.io/resources/icons/?style=outline",
+                                    color = AppTheme.colors.White
+                                )
+                            }
+                        }
+                    }
+                }
             }
         })
 }
@@ -251,7 +259,7 @@ fun ImagePreview(
     ) {
         Row(modifier = Modifier.padding(end = 30.dp)) {
             Image(
-                org.jetbrains.skija.Image.makeFromEncoded(annotatedImage.image.toByteArray()).asImageBitmap(),
+                bitmap = org.jetbrains.skija.Image.makeFromEncoded(annotatedImage.image.toByteArray()).asImageBitmap(),
                 modifier = Modifier.height(70.dp)
                     .width(90.dp)
                     .padding(start = 1.dp, top = 1.dp, end = 1.dp, bottom = 1.dp),
@@ -274,13 +282,15 @@ fun ImagePreview(
 
 @Composable
 fun ImageSelectorArea(model: DataModel, modifier: Modifier) {
+    var isDialogOpen by remember { mutableStateOf(false) }
+
     Column(
         modifier = modifier
             .padding(8.dp)
     ) {
-         Box(modifier = Modifier.weight(1f)) {
-             val stateVertical = rememberScrollState(0)
-             Column(modifier = Modifier.verticalScroll(stateVertical)) {
+        Box(modifier = Modifier.weight(1f)) {
+            val stateVertical = rememberScrollState(0)
+            Column(modifier = Modifier.verticalScroll(stateVertical)) {
                 var index = 1
                 Column {
                     Spacer(modifier = Modifier.height(5.dp))
@@ -307,24 +317,7 @@ fun ImageSelectorArea(model: DataModel, modifier: Modifier) {
         Row {
             Button(
                 onClick = {
-                    ChooseFileDialog(onItemSelected = { file ->
-                        val files = if (file.isDirectory) {
-                            file.children
-                                .filter { it.name.endsWith(".png") }
-                                .sortedBy { it.name.toLowerCase() }
-                        } else {
-                            listOf(file)
-                        }.map {
-                            // TODO support more formats
-                            val boundingBox = PascalVocBoundingBoxProvider.getBoundingBoxesForFile(
-                                it.path.toString().replace(".png", ".xml")
-                            )
-                            AnnotatedImage(it.path, readImage(it)!!, boundingBox)
-                        }
-
-                        model.selectedImages.value = files
-                        model.annotatedImage.value = files[0]
-                    })
+                    isDialogOpen = true
                 },
                 modifier = Modifier.weight(1f)
             ) {
@@ -342,6 +335,31 @@ fun ImageSelectorArea(model: DataModel, modifier: Modifier) {
             ) {
                 Text("Refresh")
             }
+        }
+
+        if (isDialogOpen) {
+            ChooseFileDialog(onItemSelected = { file ->
+                // TODO in large directories, the scanning is pretty slow
+                //      a progress indicator and handling in thew background with coroutines would be a good idea
+                val files = if (file.isDirectory) {
+                    file.children
+                        .filter { it.name.endsWith(".png") }
+                        .sortedBy { it.name.lowercase(Locale.getDefault()) }
+                } else {
+                    listOf(file)
+                }.map {
+                    // TODO support more formats
+                    val boundingBox = PascalVocBoundingBoxProvider.getBoundingBoxesForFile(
+                        it.path.toString().replace(".png", ".xml")
+                    )
+                    AnnotatedImage(it.path, readImage(it)!!, boundingBox)
+                }
+
+                model.selectedImages.value = files
+                model.annotatedImage.value = files[0]
+            }, onCloseRequest = {
+                isDialogOpen = false
+            })
         }
     }
 }

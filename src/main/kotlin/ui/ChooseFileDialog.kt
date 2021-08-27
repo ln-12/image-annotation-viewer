@@ -1,15 +1,15 @@
-import androidx.compose.desktop.AppManager
-import androidx.compose.desktop.Window
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.WindowSize
+import androidx.compose.ui.window.rememberDialogState
 import com.russhwolf.settings.ExperimentalSettingsImplementation
 import com.russhwolf.settings.Settings
 import io.File
@@ -20,17 +20,18 @@ import ui.filetree.ExpandableFile
 import ui.filetree.FileTree
 import ui.filetree.FileTreeView
 
-
 @OptIn(ExperimentalSettingsImplementation::class)
-fun ChooseFileDialog(onItemSelected: (File) -> Unit) {
-    Window(
+@Composable
+fun ChooseFileDialog(onItemSelected: (File) -> Unit, onCloseRequest: () -> Unit) {
+    Dialog(
         title = "Select file",
-        size = IntSize(1024, 768),
-        location = IntOffset(100, 100),
-        centered = false
+        onCloseRequest = onCloseRequest,
+        state = rememberDialogState(size = WindowSize(1024.dp, 768.dp))
     ) {
         val selectedFile = remember { mutableStateOf<File?>(null) }
         val fileTree = remember {
+            // TODO in large directories, the scanning is pretty slow
+            //      a progress indicator and handling in thew background with coroutines would be a good idea
             val settings = Settings()
             val path: String? = settings.getStringOrNull("path")
 
@@ -99,7 +100,7 @@ fun ChooseFileDialog(onItemSelected: (File) -> Unit) {
                                 val filePath = if(file.isDirectory) { file.path.toString() } else { file.path.parent.toString() }
                                 settings.putString("path", filePath)
 
-                                AppManager.focusedWindow?.close()
+                                onCloseRequest()
                             }
                         },
                         modifier = Modifier.padding(8.dp)
@@ -109,7 +110,7 @@ fun ChooseFileDialog(onItemSelected: (File) -> Unit) {
 
                     Button(
                         onClick = {
-                            AppManager.focusedWindow?.close()
+                            onCloseRequest()
                         },
                         modifier = Modifier.padding(8.dp)
                     ) {
